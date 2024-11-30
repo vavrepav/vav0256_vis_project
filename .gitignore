@@ -1,5 +1,7 @@
 # Common IntelliJ Platform excludes
 
+.idea/*
+
 # User specific
 **/.idea/**/workspace.xml
 **/.idea/**/tasks.xml
@@ -32,3 +34,5 @@ _UpgradeReport_Files/
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+MailManagement_vav0256/.idea/

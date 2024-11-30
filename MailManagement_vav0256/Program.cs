@@ -1,13 +1,62 @@
+using MailManagement_vav0256.Services;
+using MailManagement_vav0256.Services.Interfaces;
+using MailManagement_vav0256.Repositories;
+using MailManagement_vav0256.Repositories.Interfaces;
+using Microsoft.OpenApi.Models;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "MailManagement API", Version = "v1" });
+    
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "Enter your custom authorization token in the format **Base64(username:role)**",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+    
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type=ReferenceType.SecurityScheme,
+                    Id="Bearer"
+                },
+                Scheme="oauth2",
+                Name="Bearer",
+                In=ParameterLocation.Header
+            },
+            new List<string>()
+        }
+    });
+});
+
+// Register Services
+builder.Services.AddSingleton<IUserService, UserService>();
+builder.Services.AddSingleton<IMailService, MailService>();
+builder.Services.AddSingleton<ISenderService, SenderService>();
+builder.Services.AddSingleton<IEmailNotificationService, EmailNotificationService>();
+
+// Register Repositories
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddSingleton<IUserRepository>(_ => new UserRepository(connectionString!));
+builder.Services.AddSingleton<IMailRepository>(_ => new MailRepository(connectionString!));
+builder.Services.AddSingleton<ISenderRepository>(_ => new SenderRepository(connectionString!));
+builder.Services.AddSingleton<IEmailNotificationRepository>(_ => new EmailNotificationRepository(connectionString!));
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -16,29 +65,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+app.UseAuthorization();
 
-app.MapGet("/weatherforecast", () =>
-    {
-        var forecast = Enumerable.Range(1, 5).Select(index =>
-                new WeatherForecast
-                (
-                    DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                    Random.Shared.Next(-20, 55),
-                    summaries[Random.Shared.Next(summaries.Length)]
-                ))
-            .ToArray();
-        return forecast;
-    })
-    .WithName("GetWeatherForecast")
-    .WithOpenApi();
+app.MapControllers();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
