@@ -1,0 +1,19 @@
+@startuml
+actor User
+participant "UserController" as UC
+participant "IUserService\nUserService" as US
+participant "IUserRepository\nUserRepository" as UR
+
+User -> UC : POST /User/login\nUserLoginDto
+activate UC
+UC -> US : Login(email, password)
+activate US
+US -> UR : GetByEmailAndPassword(email, password)
+activate UR
+UR --> US : User
+deactivate UR
+US --> UC : UserReadDto
+deactivate US
+UC --> User : 200 OK\nAuth Token (Base64(email:role))
+deactivate UC
+@enduml

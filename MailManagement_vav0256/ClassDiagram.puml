@@ -1,0 +1,404 @@
+@startuml
+
+' Entities
+class User {
+    + Guid Id
+    + string Email
+    + string Password
+    + string Role
+}
+
+class Mail {
+    + Guid Id
+    + string MailType
+    + string Description
+    + Guid RecipientId
+    + Guid SenderId
+    + string Status
+    + DateTime ReceivedDate
+    + DateTime? ClaimedDate
+    + Guid ReceptionistId
+    --
+    + Sender Sender
+    + User Recipient
+    + User Receptionist
+}
+
+class Sender {
+    + Guid Id
+    + string Name
+    + string ContactInfo
+}
+
+class EmailNotification {
+    + Guid Id
+    + Guid UserId
+    + Guid MailId
+    + DateTime SentDate
+    + string NotificationType
+    --
+    + User User
+}
+
+' Repositories Interfaces
+interface IUserRepository {
+    + User GetByEmailAndPassword(string email, string password)
+    + User GetByEmail(string email)
+    + IEnumerable<User> GetAll()
+    + User GetById(Guid id)
+    + User Create(User user)
+    + void Update(User user)
+    + void Delete(Guid id)
+}
+
+interface IMailRepository {
+    + IEnumerable<Mail> GetAll()
+    + IEnumerable<Mail> GetByRecipientId(Guid recipientId)
+    + Mail GetById(Guid id)
+    + Mail Create(Mail mail, SqlConnection connection = null, SqlTransaction transaction = null)
+    + void Update(Mail mail, SqlConnection connection = null, SqlTransaction transaction = null)
+    + void Delete(Guid id)
+    + IEnumerable<Mail> GetByStatus(string status)
+    + IEnumerable<Mail> GetByRecipientIdAndStatus(Guid recipientId, string status)
+}
+
+interface ISenderRepository {
+    + IEnumerable<Sender> GetAll()
+    + Sender GetById(Guid id)
+    + Sender Create(Sender sender)
+    + void Update(Sender sender)
+    + void Delete(Guid id)
+}
+
+interface IEmailNotificationRepository {
+    + IEnumerable<EmailNotification> GetAll()
+    + EmailNotification GetById(Guid id)
+    + EmailNotification Create(EmailNotification notification, SqlConnection connection = null, SqlTransaction transaction = null)
+    + void Update(EmailNotification notification)
+    + void Delete(Guid id)
+}
+
+' Repositories Implementations
+class UserRepository {
+    - string logFilePath
+    --
+    + User GetByEmailAndPassword(string email, string password)
+    + User GetByEmail(string email)
+    + IEnumerable<User> GetAll()
+    + User GetById(Guid id)
+    + User Create(User user)
+    + void Update(User user)
+    + void Delete(Guid id)
+}
+
+class MailRepository {
+    - string logFilePath
+    --
+    + IEnumerable<Mail> GetAll()
+    + IEnumerable<Mail> GetByRecipientId(Guid recipientId)
+    + Mail GetById(Guid id)
+    + Mail Create(Mail mail, SqlConnection connection = null, SqlTransaction transaction = null)
+    + void Update(Mail mail, SqlConnection connection = null, SqlTransaction transaction = null)
+    + void Delete(Guid id)
+    + IEnumerable<Mail> GetByStatus(string status)
+    + IEnumerable<Mail> GetByRecipientIdAndStatus(Guid recipientId, string status)
+}
+
+class SenderRepository {
+    - string logFilePath
+    --
+    + IEnumerable<Sender> GetAll()
+    + Sender GetById(Guid id)
+    + Sender Create(Sender sender)
+    + void Update(Sender sender)
+    + void Delete(Guid id)
+}
+
+class EmailNotificationRepository {
+    - string logFilePath
+    --
+    + IEnumerable<EmailNotification> GetAll()
+    + EmailNotification GetById(Guid id)
+    + EmailNotification Create(EmailNotification notification, SqlConnection connection = null, SqlTransaction transaction = null)
+    + void Update(EmailNotification notification)
+    + void Delete(Guid id)
+}
+
+' Services Interfaces
+interface IUserService {
+    + UserReadDto Login(string email, string password)
+    + UserReadDto GetUserByEmail(string email)
+    + IEnumerable<UserReadDto> GetAllUsers()
+    + UserReadDto GetUserById(Guid id)
+    + UserReadDto CreateUser(UserCreateDto userDto)
+    + bool UpdateUser(Guid id, UserUpdateDto userDto)
+    + bool DeleteUser(Guid id)
+}
+
+interface IMailService {
+    + IEnumerable<MailReadDto> GetAllMails()
+    + MailReadDto GetMailById(Guid id)
+    + MailReadDto CreateMail(MailCreateDto mailDto, Guid receptionistId)
+    + bool ClaimMail(Guid mailId)
+    + bool UpdateMail(Guid id, MailUpdateDto mailDto)
+    + bool DeleteMail(Guid id)
+    + IEnumerable<MailReadDto> GetMailsByRecipientId(Guid recipientId)
+    + IEnumerable<MailReadDto> GetMailsByStatus(string status)
+    + IEnumerable<MailReadDto> GetMailsByRecipientIdAndStatus(Guid recipientId, string status)
+}
+
+interface ISenderService {
+    + IEnumerable<SenderReadDto> GetAllSenders()
+    + SenderReadDto GetSenderById(Guid id)
+    + SenderReadDto CreateSender(SenderCreateDto senderDto)
+    + bool UpdateSender(Guid id, SenderUpdateDto senderDto)
+    + bool DeleteSender(Guid id)
+}
+
+interface IEmailNotificationService {
+    + IEnumerable<EmailNotificationReadDto> GetAllNotifications()
+    + EmailNotificationReadDto GetNotificationById(Guid id)
+    + EmailNotificationReadDto CreateNotification(EmailNotificationCreateDto notificationDto)
+    + bool UpdateNotification(Guid id, EmailNotificationUpdateDto notificationDto)
+    + bool DeleteNotification(Guid id)
+}
+
+' Services Implementations
+class UserService {
+    + UserReadDto Login(string email, string password)
+    + UserReadDto GetUserByEmail(string email)
+    + IEnumerable<UserReadDto> GetAllUsers()
+    + UserReadDto GetUserById(Guid id)
+    + UserReadDto CreateUser(UserCreateDto userDto)
+    + bool UpdateUser(Guid id, UserUpdateDto userDto)
+    + bool DeleteUser(Guid id)
+}
+
+class MailService {
+    + IEnumerable<MailReadDto> GetAllMails()
+    + MailReadDto GetMailById(Guid id)
+    + MailReadDto CreateMail(MailCreateDto mailDto, Guid receptionistId)
+    + bool ClaimMail(Guid mailId)
+    + bool UpdateMail(Guid id, MailUpdateDto mailDto)
+    + bool DeleteMail(Guid id)
+    + IEnumerable<MailReadDto> GetMailsByRecipientId(Guid recipientId)
+    + IEnumerable<MailReadDto> GetMailsByStatus(string status)
+    + IEnumerable<MailReadDto> GetMailsByRecipientIdAndStatus(Guid recipientId, string status)
+}
+
+class SenderService {
+    + IEnumerable<SenderReadDto> GetAllSenders()
+    + SenderReadDto GetSenderById(Guid id)
+    + SenderReadDto CreateSender(SenderCreateDto senderDto)
+    + bool UpdateSender(Guid id, SenderUpdateDto senderDto)
+    + bool DeleteSender(Guid id)
+}
+
+class EmailNotificationService {
+    + IEnumerable<EmailNotificationReadDto> GetAllNotifications()
+    + EmailNotificationReadDto GetNotificationById(Guid id)
+    + EmailNotificationReadDto CreateNotification(EmailNotificationCreateDto notificationDto)
+    + bool UpdateNotification(Guid id, EmailNotificationUpdateDto notificationDto)
+    + bool DeleteNotification(Guid id)
+}
+
+' Controllers
+class UserController {
+    + IActionResult Login(UserLoginDto loginDto)
+    + IActionResult GetAll()
+    + IActionResult GetById(Guid id)
+    + IActionResult Create(UserCreateDto userDto)
+    + IActionResult Update(Guid id, UserUpdateDto userDto)
+    + IActionResult Delete(Guid id)
+}
+
+class MailController {
+    + IActionResult GetAll()
+    + IActionResult GetArchivedMails()
+    + IActionResult GetById(Guid id)
+    + IActionResult Create(MailCreateDto mailDto)
+    + IActionResult Update(Guid id, MailUpdateDto mailDto)
+    + IActionResult ClaimMail(Guid id)
+    + IActionResult Delete(Guid id)
+}
+
+class SenderController {
+    + IActionResult GetAll()
+    + IActionResult GetById(Guid id)
+    + IActionResult Create(SenderCreateDto senderDto)
+    + IActionResult Update(Guid id, SenderUpdateDto senderDto)
+    + IActionResult Delete(Guid id)
+}
+
+class EmailNotificationController {
+    + IActionResult GetAll()
+    + IActionResult GetById(Guid id)
+}
+
+' DTOs (Data Transfer Objects)
+class UserCreateDto {
+    + string Email
+    + string Password
+    + string Role
+}
+
+class UserReadDto {
+    + Guid Id
+    + string Email
+    + string Role
+}
+
+class UserUpdateDto {
+    + string Role
+}
+
+class MailCreateDto {
+    + string MailType
+    + string Description
+    + Guid RecipientId
+    + Guid SenderId
+}
+
+class MailReadDto {
+    + Guid Id
+    + string MailType
+    + string Description
+    + SenderReadDto Sender
+    + Guid RecipientId
+    + UserReadDto Recipient
+    + UserReadDto Receptionist
+    + string Status
+    + DateTime ReceivedDate
+    + DateTime? ClaimedDate
+}
+
+class MailUpdateDto {
+    + string MailType
+    + string Description
+    + Guid RecipientId
+    + Guid SenderId
+}
+
+class SenderCreateDto {
+    + string Name
+    + string ContactInfo
+}
+
+class SenderReadDto {
+    + Guid Id
+    + string Name
+    + string ContactInfo
+}
+
+class SenderUpdateDto {
+    + string Name
+    + string ContactInfo
+}
+
+class EmailNotificationCreateDto {
+    + Guid UserId
+    + Guid MailId
+    + string NotificationType
+}
+
+class EmailNotificationReadDto {
+    + Guid Id
+    + UserReadDto User
+    + Guid MailId
+    + DateTime SentDate
+    + string NotificationType
+}
+
+class EmailNotificationUpdateDto {
+    + string NotificationType
+}
+
+class UserLoginDto {
+    + string Email
+    + string Password
+}
+
+' Profiles (AutoMapper)
+class UserProfile
+class MailProfile
+class SenderProfile
+class EmailNotificationProfile
+
+' UnitOfWork
+class UnitOfWork {
+    - SqlConnection _connection
+    - SqlTransaction _transaction
+    + Commit()
+    + Rollback()
+}
+
+' Relationships
+
+' Entities Associations
+Mail "1" o-- "1" User : Recipient
+Mail "1" o-- "1" User : Receptionist
+Mail "1" o-- "1" Sender
+EmailNotification "1" o-- "1" User
+
+' Implementations
+UserRepository ..|> IUserRepository
+MailRepository ..|> IMailRepository
+SenderRepository ..|> ISenderRepository
+EmailNotificationRepository ..|> IEmailNotificationRepository
+
+UserService ..|> IUserService
+MailService ..|> IMailService
+SenderService ..|> ISenderService
+EmailNotificationService ..|> IEmailNotificationService
+
+' Repositories use Entities
+UserRepository --> User
+MailRepository --> Mail
+MailRepository --> Sender
+MailRepository --> User : Recipient
+MailRepository --> User : Receptionist
+SenderRepository --> Sender
+EmailNotificationRepository --> EmailNotification
+EmailNotificationRepository --> User
+
+' Services use Repositories
+UserService --> IUserRepository
+MailService --> IMailRepository
+MailService --> IUserRepository
+MailService --> IEmailNotificationRepository
+SenderService --> ISenderRepository
+EmailNotificationService --> IEmailNotificationRepository
+
+' Controllers use Services
+UserController --> IUserService
+MailController --> IMailService
+MailController --> IUserService
+SenderController --> ISenderService
+EmailNotificationController --> IEmailNotificationService
+
+' Profiles map between Entities and DTOs
+UserProfile --> User
+UserProfile --> UserCreateDto
+UserProfile --> UserReadDto
+UserProfile --> UserUpdateDto
+
+MailProfile --> Mail
+MailProfile --> MailCreateDto
+MailProfile --> MailReadDto
+MailProfile --> MailUpdateDto
+
+SenderProfile --> Sender
+SenderProfile --> SenderCreateDto
+SenderProfile --> SenderReadDto
+SenderProfile --> SenderUpdateDto
+
+EmailNotificationProfile --> EmailNotification
+EmailNotificationProfile --> EmailNotificationCreateDto
+EmailNotificationProfile --> EmailNotificationReadDto
+EmailNotificationProfile --> EmailNotificationUpdateDto
+
+' UnitOfWork uses SqlConnection and SqlTransaction
+UnitOfWork --> SqlConnection
+UnitOfWork --> SqlTransaction
+
+@enduml

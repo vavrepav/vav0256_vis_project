@@ -1,0 +1,98 @@
+@startuml
+' Define components
+package "Presentation Layer" as Presentation {
+    [UserController]
+    [MailController]
+    [SenderController]
+    [EmailNotificationController]
+}
+
+package "Business Logic Layer" as BusinessLogic {
+    [IUserService]
+    [UserService]
+    [IMailService]
+    [MailService]
+    [ISenderService]
+    [SenderService]
+    [IEmailNotificationService]
+    [EmailNotificationService]
+}
+
+package "Data Access Layer" as DataAccess {
+    [IUserRepository]
+    [UserRepository]
+    [IMailRepository]
+    [MailRepository]
+    [ISenderRepository]
+    [SenderRepository]
+    [IEmailNotificationRepository]
+    [EmailNotificationRepository]
+    [UnitOfWork]
+}
+
+package "Models/Entities" as Models {
+    [User]
+    [Mail]
+    [Sender]
+    [EmailNotification]
+}
+
+package "DTOs" as DTOs {
+    [UserCreateDto]
+    [UserReadDto]
+    [UserUpdateDto]
+    [MailCreateDto]
+    [MailReadDto]
+    [MailUpdateDto]
+    [SenderCreateDto]
+    [SenderReadDto]
+    [SenderUpdateDto]
+    [EmailNotificationCreateDto]
+    [EmailNotificationReadDto]
+    [EmailNotificationUpdateDto]
+}
+
+package "Mapping Profiles" as Mapping {
+    [UserProfile]
+    [MailProfile]
+    [SenderProfile]
+    [EmailNotificationProfile]
+}
+
+database "Database" as DB
+
+' Define relationships
+[UserController] --> [IUserService] : Uses
+[MailController] --> [IMailService] : Uses
+[SenderController] --> [ISenderService] : Uses
+[EmailNotificationController] --> [IEmailNotificationService] : Uses
+
+[IUserService] <|.. [UserService]
+[IMailService] <|.. [MailService]
+[ISenderService] <|.. [SenderService]
+[IEmailNotificationService] <|.. [EmailNotificationService]
+
+[UserService] --> [IUserRepository] : Uses
+[MailService] --> [IMailRepository] : Uses
+[MailService] --> [IUserRepository] : Uses
+[MailService] --> [IEmailNotificationRepository] : Uses
+[SenderService] --> [ISenderRepository] : Uses
+[EmailNotificationService] --> [IEmailNotificationRepository] : Uses
+
+[IUserRepository] <|.. [UserRepository]
+[IMailRepository] <|.. [MailRepository]
+[ISenderRepository] <|.. [SenderRepository]
+[IEmailNotificationRepository] <|.. [EmailNotificationRepository]
+
+[UserRepository] --> DB : CRUD Operations
+[MailRepository] --> DB : CRUD Operations
+[SenderRepository] --> DB : CRUD Operations
+[EmailNotificationRepository] --> DB : CRUD Operations
+
+' Mapping Profiles
+[UserProfile] --> [User]
+[UserProfile] --> [UserCreateDto]
+[UserProfile] --> [UserReadDto]
+[UserProfile] --> [UserUpdateDto]
+
+@enduml

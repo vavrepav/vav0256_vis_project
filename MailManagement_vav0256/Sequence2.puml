@@ -1,0 +1,35 @@
+@startuml
+actor Receptionist
+participant "MailController" as MC
+participant "IMailService\nMailService" as MS
+participant "IMailRepository\nMailRepository" as MR
+participant "IEmailNotificationRepository\nEmailNotificationRepository" as ENR
+participant "UnitOfWork" as UoW
+participant "IUserRepository\nUserRepository" as UR
+
+Receptionist -> MC : POST /Mail\nMailCreateDto
+activate MC
+MC -> MC : IsAuthorized("Receptionist")
+MC -> UR : GetUserByEmail(email)
+activate UR
+UR --> MC : User
+deactivate UR
+MC -> MS : CreateMail(mailDto, receptionistId)
+activate MS
+MS -> UoW : Begin Transaction
+activate UoW
+MS -> MR : Create(mail, connection, transaction)
+activate MR
+MR --> MS : Mail
+deactivate MR
+MS -> ENR : Create(notification, connection, transaction)
+activate ENR
+ENR --> MS : EmailNotification
+deactivate ENR
+MS -> UoW : Commit
+deactivate UoW
+MS --> MC : MailReadDto
+deactivate MS
+MC --> Receptionist : 201 Created\nMailReadDto
+deactivate MC
+@enduml
