@@ -11,5 +11,9 @@ namespace MailManagement_vav0256.Entities
         public DateTime ReceivedDate { get; set; }
         public DateTime? ClaimedDate { get; set; }
         public Guid ReceptionistId { get; set; }
+
+        public Sender Sender { get; set; }
+        public User Recipient { get; set; }
+        public User Receptionist { get; set; }
     }
 }

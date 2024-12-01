@@ -30,12 +30,36 @@ namespace MailManagement_vav0256.Controllers
             IEnumerable<MailReadDto> mails;
             if (role is "Receptionist" or "Administrator")
             {
-                mails = _mailService.GetAllMails();
+                mails = _mailService.GetMailsByStatus("Received");
             }
             else
             {
                 var user = _userService.GetUserByEmail(email);
-                mails = _mailService.GetMailsByRecipientId(user.Id);
+                mails = _mailService.GetMailsByRecipientIdAndStatus(user.Id, "Received");
+            }
+
+            return Ok(mails);
+        }
+        
+        [HttpGet("archive")]
+        public IActionResult GetArchivedMails()
+        {
+            var (isAuthorized, email, role) = IsAuthorized();
+            if (!isAuthorized)
+            {
+                Response.StatusCode = 403;
+                return new EmptyResult();
+            }
+
+            IEnumerable<MailReadDto> mails;
+            if (role is "Receptionist" or "Administrator")
+            {
+                mails = _mailService.GetMailsByStatus("Claimed");
+            }
+            else
+            {
+                var user = _userService.GetUserByEmail(email);
+                mails = _mailService.GetMailsByRecipientIdAndStatus(user.Id, "Claimed");
             }
 
             return Ok(mails);
@@ -102,7 +126,7 @@ namespace MailManagement_vav0256.Controllers
         }
 
         [HttpPost("{id}/Claim")]
-        public IActionResult ClaimMail(Guid id, [FromBody] MailClaimDto claimDto)
+        public IActionResult ClaimMail(Guid id)
         {
             var (isAuthorized, _, role) = IsAuthorized("Receptionist");
             if (!isAuthorized)
@@ -111,7 +135,7 @@ namespace MailManagement_vav0256.Controllers
                 return new EmptyResult();
             }
 
-            var success = _mailService.ClaimMail(claimDto, id);
+            var success = _mailService.ClaimMail(id);
             if (!success)
                 return NotFound();
 

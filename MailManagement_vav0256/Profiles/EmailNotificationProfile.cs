@@ -8,7 +8,8 @@ namespace MailManagement_vav0256.Profiles
     {
         public EmailNotificationProfile()
         {
-            CreateMap<EmailNotification, EmailNotificationReadDto>();
+            CreateMap<EmailNotification, EmailNotificationReadDto>()
+                .ForMember(dest => dest.User, opt => opt.MapFrom(src => src.User));
             CreateMap<EmailNotificationCreateDto, EmailNotification>();
             CreateMap<EmailNotificationUpdateDto, EmailNotification>();
         }

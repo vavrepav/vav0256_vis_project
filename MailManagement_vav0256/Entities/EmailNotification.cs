@@ -7,5 +7,7 @@ namespace MailManagement_vav0256.Entities
         public Guid MailId { get; set; }
         public DateTime SentDate { get; set; }
         public string NotificationType { get; set; }
+
+        public User User { get; set; }
     }
 }

@@ -1,3 +1,4 @@
+using AutoMapper;
 using MailManagement_vav0256.Services;
 using MailManagement_vav0256.Services.Interfaces;
 using MailManagement_vav0256.Repositories;
@@ -44,14 +45,19 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddAutoMapper(typeof(Program));
 
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
 // Register Services
 builder.Services.AddSingleton<IUserService, UserService>();
-builder.Services.AddSingleton<IMailService, MailService>();
+builder.Services.AddSingleton<IMailService>(provider => new MailService(
+    provider.GetRequiredService<IMailRepository>(),
+    provider.GetRequiredService<IUserRepository>(),
+    provider.GetRequiredService<IEmailNotificationRepository>(),
+    provider.GetRequiredService<IMapper>(),
+    connectionString));
 builder.Services.AddSingleton<ISenderService, SenderService>();
 builder.Services.AddSingleton<IEmailNotificationService, EmailNotificationService>();
 
-// Register Repositories
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddSingleton<IUserRepository>(_ => new UserRepository(connectionString!));
 builder.Services.AddSingleton<IMailRepository>(_ => new MailRepository(connectionString!));
 builder.Services.AddSingleton<ISenderRepository>(_ => new SenderRepository(connectionString!));
