@@ -35,19 +35,38 @@ namespace MailManagement_vav0256.Repositories
             }
             return null;
         }
+        
+        public IEnumerable<Mail> GetByRecipientId(Guid recipientId)
+        {
+            var mails = new List<Mail>();
+            using var connection = new SqlConnection(connectionString);
+            var command = new SqlCommand("SELECT * FROM Mails WHERE RecipientId = @RecipientId", connection);
+            command.Parameters.AddWithValue("@RecipientId", recipientId);
+
+            connection.Open();
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                mails.Add(MapReaderToMail(reader));
+            }
+            return mails;
+        }
 
         public Mail Create(Mail mail)
         {
             using var connection = new SqlConnection(connectionString);
-            var command = new SqlCommand("INSERT INTO Mails (Id, MailType, Description, RecipientId, SenderId, Status, ReceivedDate, ClaimedDate) VALUES (@Id, @MailType, @Description, @RecipientId, @SenderId, @Status, @ReceivedDate, @ClaimedDate)", connection);
+            var command = new SqlCommand(@"INSERT INTO Mails 
+                (Id, MailType, Description, RecipientId, SenderId, Status, ReceivedDate, ClaimedDate, ReceptionistId) 
+                VALUES (@Id, @MailType, @Description, @RecipientId, @SenderId, @Status, @ReceivedDate, @ClaimedDate, @ReceptionistId)", connection);
             command.Parameters.AddWithValue("@Id", mail.Id);
             command.Parameters.AddWithValue("@MailType", mail.MailType);
             command.Parameters.AddWithValue("@Description", mail.Description);
             command.Parameters.AddWithValue("@RecipientId", mail.RecipientId);
             command.Parameters.AddWithValue("@SenderId", mail.SenderId);
-            command.Parameters.AddWithValue("@Status", mail.Status);
+            command.Parameters.AddWithValue("@Status", mail.Status.ToString()); // Store enum as string
             command.Parameters.AddWithValue("@ReceivedDate", mail.ReceivedDate);
             command.Parameters.AddWithValue("@ClaimedDate", (object)mail.ClaimedDate ?? DBNull.Value);
+            command.Parameters.AddWithValue("@ReceptionistId", mail.ReceptionistId);
 
             connection.Open();
             command.ExecuteNonQuery();
@@ -90,9 +109,10 @@ namespace MailManagement_vav0256.Repositories
                 Description = reader["Description"].ToString(),
                 RecipientId = Guid.Parse(reader["RecipientId"].ToString()),
                 SenderId = Guid.Parse(reader["SenderId"].ToString()),
-                Status = reader["Status"].ToString(),
+                Status = (reader["Status"].ToString()),
                 ReceivedDate = DateTime.Parse(reader["ReceivedDate"].ToString()),
-                ClaimedDate = reader["ClaimedDate"] == DBNull.Value ? (DateTime?)null : DateTime.Parse(reader["ClaimedDate"].ToString())
+                ClaimedDate = reader["ClaimedDate"] == DBNull.Value ? (DateTime?)null : DateTime.Parse(reader["ClaimedDate"].ToString()),
+                ReceptionistId = Guid.Parse(reader["ReceptionistId"].ToString())
             };
         }
     }

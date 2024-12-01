@@ -2,9 +2,6 @@ using MailManagement_vav0256.Services.Interfaces;
 using MailManagement_vav0256.Repositories.Interfaces;
 using MailManagement_vav0256.DTOs.User;
 using MailManagement_vav0256.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace MailManagement_vav0256.Services
 {
@@ -20,6 +17,20 @@ namespace MailManagement_vav0256.Services
         public UserReadDto Login(string email, string password)
         {
             var user = _userRepository.GetByEmailAndPassword(email, password);
+            if (user == null)
+                return null;
+
+            return new UserReadDto
+            {
+                Id = user.Id,
+                Email = user.Email,
+                Role = user.Role
+            };
+        }
+        
+        public UserReadDto GetUserByEmail(string email)
+        {
+            var user = _userRepository.GetByEmail(email);
             if (user == null)
                 return null;
 

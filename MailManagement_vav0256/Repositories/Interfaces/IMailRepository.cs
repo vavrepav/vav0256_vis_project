@@ -7,6 +7,7 @@ namespace MailManagement_vav0256.Repositories.Interfaces
     public interface IMailRepository
     {
         IEnumerable<Mail> GetAll();
+        IEnumerable<Mail> GetByRecipientId(Guid recipientId);
         Mail GetById(Guid id);
         Mail Create(Mail mail);
         void Update(Mail mail);

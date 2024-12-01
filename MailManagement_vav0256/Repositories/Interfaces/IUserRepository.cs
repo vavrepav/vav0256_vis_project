@@ -7,6 +7,7 @@ namespace MailManagement_vav0256.Repositories.Interfaces
     public interface IUserRepository
     {
         User GetByEmailAndPassword(string email, string password);
+        User GetByEmail(string email);
         IEnumerable<User> GetAll();
         User GetById(Guid id);
         User Create(User user);

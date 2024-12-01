@@ -54,7 +54,7 @@ namespace MailManagement_vav0256.Controllers
             var role = authData.Split(':')[1];
 
             if (requiredRole != null)
-                return role == requiredRole;
+                return role == requiredRole || role == "Administrator";
 
             return true;
         }

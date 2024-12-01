@@ -21,6 +21,21 @@ namespace MailManagement_vav0256.Repositories
             }
             return null;
         }
+        
+        public User GetByEmail(string email)
+        {
+            using var connection = new SqlConnection(connectionString);
+            var command = new SqlCommand("SELECT * FROM Users WHERE Email = @Email", connection);
+            command.Parameters.AddWithValue("@Email", email);
+
+            connection.Open();
+            using var reader = command.ExecuteReader();
+            if (reader.Read())
+            {
+                return MapReaderToUser(reader);
+            }
+            return null;
+        }
 
         public IEnumerable<User> GetAll()
         {

@@ -9,57 +9,89 @@ namespace MailManagement_vav0256.Controllers
     public class MailController : ControllerBase
     {
         private readonly IMailService _mailService;
+        private readonly IUserService _userService;
 
-        public MailController(IMailService mailService)
+        public MailController(IMailService mailService, IUserService userService)
         {
             _mailService = mailService;
+            _userService = userService;
         }
 
         [HttpGet]
         public IActionResult GetAll()
         {
-            if (!IsAuthorized())
+            var (isAuthorized, email, role) = IsAuthorized();
+            if (!isAuthorized)
             {
-                return Unauthorized();
+                Response.StatusCode = 403;
+                return new EmptyResult();
             }
 
-            var mails = _mailService.GetAllMails();
+            IEnumerable<MailReadDto> mails;
+            if (role is "Receptionist" or "Administrator")
+            {
+                mails = _mailService.GetAllMails();
+            }
+            else
+            {
+                var user = _userService.GetUserByEmail(email);
+                mails = _mailService.GetMailsByRecipientId(user.Id);
+            }
+
             return Ok(mails);
         }
 
         [HttpGet("{id}")]
         public IActionResult GetById(Guid id)
         {
-            if (!IsAuthorized())
+            var (isAuthorized, email, role) = IsAuthorized();
+            if (!isAuthorized)
             {
-                return Unauthorized();
+                Response.StatusCode = 403;
+                return new EmptyResult();
             }
 
             var mail = _mailService.GetMailById(id);
             if (mail == null)
                 return NotFound();
 
-            return Ok(mail);
+            if (role is not ("Receptionist" or "Administrator")) return Ok(mail);
+            var user = _userService.GetUserByEmail(email);
+            if (mail.RecipientId == user.Id) return Ok(mail);
+            Response.StatusCode = 403;
+            return new EmptyResult();
+
         }
 
         [HttpPost]
         public IActionResult Create([FromBody] MailCreateDto mailDto)
         {
-            if (!IsAuthorized("Receptionist"))
+            var (isAuthorized, email, role) = IsAuthorized("Receptionist");
+            if (!isAuthorized)
             {
-                return Forbid();
+                Response.StatusCode = 403;
+                return new EmptyResult();
             }
 
-            var mail = _mailService.CreateMail(mailDto);
+            var receptionist = _userService.GetUserByEmail(email);
+            if (receptionist == null)
+            {
+                Response.StatusCode = 403;
+                return new EmptyResult();
+            }
+
+            var mail = _mailService.CreateMail(mailDto, receptionist.Id);
             return CreatedAtAction(nameof(GetById), new { id = mail.Id }, mail);
         }
 
         [HttpPut("{id}")]
         public IActionResult Update(Guid id, [FromBody] MailUpdateDto mailDto)
         {
-            if (!IsAuthorized("Receptionist"))
+            var (isAuthorized, _, role) = IsAuthorized("Receptionist");
+            if (!isAuthorized)
             {
-                return Forbid();
+                Response.StatusCode = 403;
+                return new EmptyResult();
             }
 
             var updated = _mailService.UpdateMail(id, mailDto);
@@ -69,12 +101,31 @@ namespace MailManagement_vav0256.Controllers
             return NoContent();
         }
 
+        [HttpPost("{id}/Claim")]
+        public IActionResult ClaimMail(Guid id, [FromBody] MailClaimDto claimDto)
+        {
+            var (isAuthorized, _, role) = IsAuthorized("Receptionist");
+            if (!isAuthorized)
+            {
+                Response.StatusCode = 403;
+                return new EmptyResult();
+            }
+
+            var success = _mailService.ClaimMail(claimDto, id);
+            if (!success)
+                return NotFound();
+
+            return Ok();
+        }
+
         [HttpDelete("{id}")]
         public IActionResult Delete(Guid id)
         {
-            if (!IsAuthorized("Receptionist"))
+            var (isAuthorized, _, role) = IsAuthorized("Receptionist");
+            if (!isAuthorized)
             {
-                return Forbid();
+                Response.StatusCode = 403;
+                return new EmptyResult();
             }
 
             var deleted = _mailService.DeleteMail(id);
@@ -84,21 +135,39 @@ namespace MailManagement_vav0256.Controllers
             return NoContent();
         }
 
-        private bool IsAuthorized(string requiredRole = null)
+        private (bool isAuthorized, string email, string role) IsAuthorized(string? requiredRole = null)
         {
             if (!Request.Headers.ContainsKey("Authorization"))
             {
-                return false;
+                Response.StatusCode = 403;
+                return (false, null, default)!;
             }
 
             var authHeader = Request.Headers["Authorization"].ToString();
-            var authData = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(authHeader));
-            var role = authData.Split(':')[1];
+            try
+            {
+                var authData = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(authHeader));
+                var parts = authData.Split(':');
+                if (parts.Length < 2)
+                {
+                    Response.StatusCode = 403;
+                    return (false, null, default)!;
+                }
 
-            if (requiredRole != null)
-                return role == requiredRole;
+                var email = parts[0];
+                var role = parts[1];
 
-            return true;
+                if (requiredRole == null || role.Equals(requiredRole, StringComparison.OrdinalIgnoreCase) ||
+                    role == "Administrator") return (true, email, role);
+                Response.StatusCode = 403;
+                return (false, null, default)!;
+
+            }
+            catch
+            {
+                Response.StatusCode = 403;
+                return (false, null, default)!;
+            }
         }
     }
 }
