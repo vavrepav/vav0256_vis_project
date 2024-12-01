@@ -1,3 +1,4 @@
+using AutoMapper;
 using MailManagement_vav0256.Services.Interfaces;
 using MailManagement_vav0256.Repositories.Interfaces;
 using MailManagement_vav0256.DTOs.Mail;
@@ -10,81 +11,44 @@ namespace MailManagement_vav0256.Services
         private readonly IMailRepository _mailRepository;
         private readonly IUserRepository _userRepository;
         private readonly IEmailNotificationRepository _emailNotificationRepository;
-
-        public MailService(IMailRepository mailRepository, IUserRepository userRepository, IEmailNotificationRepository emailNotificationRepository)
+        private readonly IMapper _mapper;
+        
+        public MailService(IMailRepository mailRepository, IUserRepository userRepository, IEmailNotificationRepository emailNotificationRepository, IMapper mapper)
         {
             _mailRepository = mailRepository;
             _userRepository = userRepository;
             _emailNotificationRepository = emailNotificationRepository;
+            _mapper = mapper;
         }
 
         public IEnumerable<MailReadDto> GetAllMails()
         {
             var mails = _mailRepository.GetAll();
-            return mails.Select(mail => new MailReadDto
-            {
-                Id = mail.Id,
-                MailType = mail.MailType,
-                Description = mail.Description,
-                RecipientId = mail.RecipientId,
-                SenderId = mail.SenderId,
-                Status = mail.Status,
-                ReceivedDate = mail.ReceivedDate,
-                ClaimedDate = mail.ClaimedDate
-            });
+            return _mapper.Map<IEnumerable<MailReadDto>>(mails);
         }
-        
+
         public IEnumerable<MailReadDto> GetMailsByRecipientId(Guid recipientId)
         {
             var mails = _mailRepository.GetByRecipientId(recipientId);
-            return mails.Select(mail => new MailReadDto
-            {
-                Id = mail.Id,
-                MailType = mail.MailType,
-                Description = mail.Description,
-                RecipientId = mail.RecipientId,
-                SenderId = mail.SenderId,
-                Status = mail.Status,
-                ReceivedDate = mail.ReceivedDate,
-                ClaimedDate = mail.ClaimedDate
-            });
+            return _mapper.Map<IEnumerable<MailReadDto>>(mails);
         }
 
         public MailReadDto GetMailById(Guid id)
         {
             var mail = _mailRepository.GetById(id);
-            if (mail == null)
-                return null;
-
-            return new MailReadDto
-            {
-                Id = mail.Id,
-                MailType = mail.MailType,
-                Description = mail.Description,
-                RecipientId = mail.RecipientId,
-                SenderId = mail.SenderId,
-                Status = mail.Status,
-                ReceivedDate = mail.ReceivedDate,
-                ClaimedDate = mail.ClaimedDate
-            };
+            return _mapper.Map<MailReadDto>(mail);
         }
 
         public MailReadDto CreateMail(MailCreateDto mailDto, Guid receptionistId)
         {
-            var mail = new Mail
-            {
-                Id = Guid.NewGuid(),
-                MailType = mailDto.MailType,
-                Description = mailDto.Description,
-                RecipientId = mailDto.RecipientId,
-                SenderId = mailDto.SenderId,
-                Status = "Received",
-                ReceivedDate = DateTime.UtcNow,
-                ReceptionistId = receptionistId
-            };
+            var mail = _mapper.Map<Mail>(mailDto);
+            mail.Id = Guid.NewGuid();
+            mail.Status = "Received";
+            mail.ReceivedDate = DateTime.UtcNow;
+            mail.ReceptionistId = receptionistId;
 
             _mailRepository.Create(mail);
-            
+
             var notification = new EmailNotification
             {
                 Id = Guid.NewGuid(),
@@ -95,17 +59,7 @@ namespace MailManagement_vav0256.Services
             };
             _emailNotificationRepository.Create(notification);
 
-            return new MailReadDto
-            {
-                Id = mail.Id,
-                MailType = mail.MailType,
-                Description = mail.Description,
-                RecipientId = mail.RecipientId,
-                SenderId = mail.SenderId,
-                Status = mail.Status,
-                ReceivedDate = mail.ReceivedDate,
-                ClaimedDate = mail.ClaimedDate
-            };
+            return _mapper.Map<MailReadDto>(mail);
         }
         
         public bool ClaimMail(MailClaimDto claimDto, Guid mailId)
@@ -123,7 +77,6 @@ namespace MailManagement_vav0256.Services
 
             _mailRepository.Update(mail);
 
-            // Create EmailNotification
             var notification = new EmailNotification
             {
                 Id = Guid.NewGuid(),
@@ -143,10 +96,7 @@ namespace MailManagement_vav0256.Services
             if (mail == null)
                 return false;
 
-            mail.MailType = mailDto.MailType;
-            mail.Description = mailDto.Description;
-            mail.RecipientId = mailDto.RecipientId;
-            mail.SenderId = mailDto.SenderId;
+            _mapper.Map(mailDto, mail);
 
             _mailRepository.Update(mail);
 

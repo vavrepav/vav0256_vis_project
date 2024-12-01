@@ -1,3 +1,4 @@
+using AutoMapper;
 using MailManagement_vav0256.Services.Interfaces;
 using MailManagement_vav0256.Repositories.Interfaces;
 using MailManagement_vav0256.DTOs.Sender;
@@ -8,54 +9,34 @@ namespace MailManagement_vav0256.Services
     public class SenderService : ISenderService
     {
         private readonly ISenderRepository _senderRepository;
+        private readonly IMapper _mapper;
 
-        public SenderService(ISenderRepository senderRepository)
+        public SenderService(ISenderRepository senderRepository, IMapper mapper)
         {
             _senderRepository = senderRepository;
+            _mapper = mapper;
         }
 
         public IEnumerable<SenderReadDto> GetAllSenders()
         {
             var senders = _senderRepository.GetAll();
-            return senders.Select(sender => new SenderReadDto
-            {
-                Id = sender.Id,
-                Name = sender.Name,
-                ContactInfo = sender.ContactInfo
-            });
+            return _mapper.Map<IEnumerable<SenderReadDto>>(senders);
         }
 
         public SenderReadDto GetSenderById(Guid id)
         {
             var sender = _senderRepository.GetById(id);
-            if (sender == null)
-                return null;
-
-            return new SenderReadDto
-            {
-                Id = sender.Id,
-                Name = sender.Name,
-                ContactInfo = sender.ContactInfo
-            };
+            return _mapper.Map<SenderReadDto>(sender);
         }
 
         public SenderReadDto CreateSender(SenderCreateDto senderDto)
         {
-            var sender = new Sender
-            {
-                Id = Guid.NewGuid(),
-                Name = senderDto.Name,
-                ContactInfo = senderDto.ContactInfo
-            };
+            var sender = _mapper.Map<Sender>(senderDto);
+            sender.Id = Guid.NewGuid();
 
-            var createdSender = _senderRepository.Create(sender);
+            _senderRepository.Create(sender);
 
-            return new SenderReadDto
-            {
-                Id = createdSender.Id,
-                Name = createdSender.Name,
-                ContactInfo = createdSender.ContactInfo
-            };
+            return _mapper.Map<SenderReadDto>(sender);
         }
 
         public bool UpdateSender(Guid id, SenderUpdateDto senderDto)
@@ -64,8 +45,7 @@ namespace MailManagement_vav0256.Services
             if (sender == null)
                 return false;
 
-            sender.Name = senderDto.Name;
-            sender.ContactInfo = senderDto.ContactInfo;
+            _mapper.Map(senderDto, sender);
 
             _senderRepository.Update(sender);
 

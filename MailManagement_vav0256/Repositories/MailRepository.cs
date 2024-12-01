@@ -6,6 +6,7 @@ namespace MailManagement_vav0256.Repositories
 {
     public class MailRepository(string connectionString) : IMailRepository
     {
+        private readonly string logFilePath = "MailRepository.txt";
         public IEnumerable<Mail> GetAll()
         {
             var mails = new List<Mail>();
@@ -70,6 +71,8 @@ namespace MailManagement_vav0256.Repositories
 
             connection.Open();
             command.ExecuteNonQuery();
+            
+            LogChange("Create", mail);
 
             return mail;
         }
@@ -88,6 +91,8 @@ namespace MailManagement_vav0256.Repositories
 
             connection.Open();
             command.ExecuteNonQuery();
+            
+            LogChange("Update", mail);
         }
 
         public void Delete(Guid id)
@@ -98,6 +103,8 @@ namespace MailManagement_vav0256.Repositories
 
             connection.Open();
             command.ExecuteNonQuery();
+            
+            LogChange("Delete", new Mail { Id = id });
         }
 
         private Mail MapReaderToMail(SqlDataReader reader)
@@ -114,6 +121,12 @@ namespace MailManagement_vav0256.Repositories
                 ClaimedDate = reader["ClaimedDate"] == DBNull.Value ? (DateTime?)null : DateTime.Parse(reader["ClaimedDate"].ToString()),
                 ReceptionistId = Guid.Parse(reader["ReceptionistId"].ToString())
             };
+        }
+        
+        private void LogChange(string operation, Mail mail)
+        {
+            var logMessage = $"{DateTime.Now}: {operation} - Mail ID: {mail.Id}";
+            File.AppendAllText(logFilePath, logMessage + Environment.NewLine);
         }
     }
 }

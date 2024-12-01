@@ -6,6 +6,8 @@ namespace MailManagement_vav0256.Repositories
 {
     public class SenderRepository(string connectionString) : ISenderRepository
     {
+        private readonly string logFilePath = "SenderRepository.txt";
+        
         public IEnumerable<Sender> GetAll()
         {
             var senders = new List<Sender>();
@@ -47,6 +49,8 @@ namespace MailManagement_vav0256.Repositories
             connection.Open();
             command.ExecuteNonQuery();
 
+            LogChange("Create", sender);
+            
             return sender;
         }
 
@@ -60,6 +64,8 @@ namespace MailManagement_vav0256.Repositories
 
             connection.Open();
             command.ExecuteNonQuery();
+            
+            LogChange("Update", sender);
         }
 
         public void Delete(Guid id)
@@ -70,6 +76,8 @@ namespace MailManagement_vav0256.Repositories
 
             connection.Open();
             command.ExecuteNonQuery();
+            
+            LogChange("Delete", new Sender { Id = id });
         }
 
         private Sender MapReaderToSender(SqlDataReader reader)
@@ -80,6 +88,12 @@ namespace MailManagement_vav0256.Repositories
                 Name = reader["Name"].ToString(),
                 ContactInfo = reader["ContactInfo"].ToString()
             };
+        }
+        
+        private void LogChange(string operation, Sender sender)
+        {
+            string logMessage = $"{DateTime.Now}: {operation} - Sender ID: {sender.Id}, Name: {sender.Name}";
+            File.AppendAllText(logFilePath, logMessage + Environment.NewLine);
         }
     }
 }

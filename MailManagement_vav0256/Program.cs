@@ -42,6 +42,8 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+builder.Services.AddAutoMapper(typeof(Program));
+
 // Register Services
 builder.Services.AddSingleton<IUserService, UserService>();
 builder.Services.AddSingleton<IMailService, MailService>();

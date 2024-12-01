@@ -6,6 +6,7 @@ namespace MailManagement_vav0256.Repositories
 {
     public class EmailNotificationRepository(string connectionString) : IEmailNotificationRepository
     {
+        private readonly string logFilePath = "EmailNotificationRepository.txt";
         public IEnumerable<EmailNotification> GetAll()
         {
             var notifications = new List<EmailNotification>();
@@ -48,6 +49,8 @@ namespace MailManagement_vav0256.Repositories
 
             connection.Open();
             command.ExecuteNonQuery();
+            
+            LogChange("Create", notification);
 
             return notification;
         }
@@ -61,6 +64,8 @@ namespace MailManagement_vav0256.Repositories
 
             connection.Open();
             command.ExecuteNonQuery();
+            
+            LogChange("Update", notification);
         }
 
         public void Delete(Guid id)
@@ -71,6 +76,8 @@ namespace MailManagement_vav0256.Repositories
 
             connection.Open();
             command.ExecuteNonQuery();
+            
+            LogChange("Delete", new EmailNotification { Id = id });
         }
 
         private EmailNotification MapReaderToNotification(SqlDataReader reader)
@@ -83,6 +90,12 @@ namespace MailManagement_vav0256.Repositories
                 SentDate = DateTime.Parse(reader["SentDate"].ToString()),
                 NotificationType = reader["NotificationType"].ToString()
             };
+        }
+        
+        private void LogChange(string operation, EmailNotification notification)
+        {
+            string logMessage = $"{DateTime.Now}: {operation} - Notification ID: {notification.Id}, Type: {notification.NotificationType}";
+            File.AppendAllText(logFilePath, logMessage + Environment.NewLine);
         }
     }
 }

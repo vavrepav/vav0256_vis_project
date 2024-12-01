@@ -1,3 +1,4 @@
+using AutoMapper;
 using MailManagement_vav0256.Services.Interfaces;
 using MailManagement_vav0256.Repositories.Interfaces;
 using MailManagement_vav0256.DTOs.User;
@@ -8,83 +9,46 @@ namespace MailManagement_vav0256.Services
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IMapper _mapper;
 
-        public UserService(IUserRepository userRepository)
+        public UserService(IUserRepository userRepository, IMapper mapper)
         {
             _userRepository = userRepository;
+            _mapper = mapper;
         }
 
         public UserReadDto Login(string email, string password)
         {
             var user = _userRepository.GetByEmailAndPassword(email, password);
-            if (user == null)
-                return null;
-
-            return new UserReadDto
-            {
-                Id = user.Id,
-                Email = user.Email,
-                Role = user.Role
-            };
+            return _mapper.Map<UserReadDto>(user);
         }
-        
+
         public UserReadDto GetUserByEmail(string email)
         {
             var user = _userRepository.GetByEmail(email);
-            if (user == null)
-                return null;
-
-            return new UserReadDto
-            {
-                Id = user.Id,
-                Email = user.Email,
-                Role = user.Role
-            };
+            return _mapper.Map<UserReadDto>(user);
         }
 
         public IEnumerable<UserReadDto> GetAllUsers()
         {
             var users = _userRepository.GetAll();
-            return users.Select(user => new UserReadDto
-            {
-                Id = user.Id,
-                Email = user.Email,
-                Role = user.Role
-            });
+            return _mapper.Map<IEnumerable<UserReadDto>>(users);
         }
 
         public UserReadDto GetUserById(Guid id)
         {
             var user = _userRepository.GetById(id);
-            if (user == null)
-                return null;
-
-            return new UserReadDto
-            {
-                Id = user.Id,
-                Email = user.Email,
-                Role = user.Role
-            };
+            return _mapper.Map<UserReadDto>(user);
         }
 
         public UserReadDto CreateUser(UserCreateDto userDto)
         {
-            var user = new User
-            {
-                Id = Guid.NewGuid(),
-                Email = userDto.Email,
-                Password = userDto.Password,
-                Role = userDto.Role
-            };
+            var user = _mapper.Map<User>(userDto);
+            user.Id = Guid.NewGuid();
 
-            var createdUser = _userRepository.Create(user);
+            _userRepository.Create(user);
 
-            return new UserReadDto
-            {
-                Id = createdUser.Id,
-                Email = createdUser.Email,
-                Role = createdUser.Role
-            };
+            return _mapper.Map<UserReadDto>(user);
         }
 
         public bool UpdateUser(Guid id, UserUpdateDto userDto)
@@ -93,14 +57,13 @@ namespace MailManagement_vav0256.Services
             if (user == null)
                 return false;
 
-            user.Email = userDto.Email;
-            user.Password = userDto.Password;
-            user.Role = userDto.Role;
+            _mapper.Map(userDto, user);
 
             _userRepository.Update(user);
 
             return true;
         }
+
 
         public bool DeleteUser(Guid id)
         {

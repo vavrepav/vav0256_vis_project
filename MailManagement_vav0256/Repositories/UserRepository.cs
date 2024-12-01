@@ -6,6 +6,8 @@ namespace MailManagement_vav0256.Repositories
 {
     public class UserRepository(string connectionString) : IUserRepository
     {
+        private readonly string logFilePath = "UserRepository.txt";
+        
         public User GetByEmailAndPassword(string email, string password)
         {
             using var connection = new SqlConnection(connectionString);
@@ -78,6 +80,8 @@ namespace MailManagement_vav0256.Repositories
 
             connection.Open();
             command.ExecuteNonQuery();
+            
+            LogChange("Create", user);
 
             return user;
         }
@@ -93,6 +97,8 @@ namespace MailManagement_vav0256.Repositories
 
             connection.Open();
             command.ExecuteNonQuery();
+            
+            LogChange("Update", user);
         }
 
         public void Delete(Guid id)
@@ -103,6 +109,8 @@ namespace MailManagement_vav0256.Repositories
 
             connection.Open();
             command.ExecuteNonQuery();
+            
+            LogChange("Delete", new User { Id = id });
         }
 
         private User MapReaderToUser(SqlDataReader reader)
@@ -114,6 +122,12 @@ namespace MailManagement_vav0256.Repositories
                 Password = reader["Password"].ToString(),
                 Role = reader["Role"].ToString()
             };
+        }
+        
+        private void LogChange(string operation, User user)
+        {
+            string logMessage = $"{DateTime.Now}: {operation} - User ID: {user.Id}, Email: {user.Email}";
+            File.AppendAllText(logFilePath, logMessage + Environment.NewLine);
         }
     }
 }

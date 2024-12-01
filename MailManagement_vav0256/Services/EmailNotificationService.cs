@@ -2,71 +2,42 @@ using MailManagement_vav0256.Services.Interfaces;
 using MailManagement_vav0256.Repositories.Interfaces;
 using MailManagement_vav0256.DTOs.EmailNotification;
 using MailManagement_vav0256.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using AutoMapper;
 
 namespace MailManagement_vav0256.Services
 {
     public class EmailNotificationService : IEmailNotificationService
     {
         private readonly IEmailNotificationRepository _notificationRepository;
+        private readonly IMapper _mapper;
 
-        public EmailNotificationService(IEmailNotificationRepository notificationRepository)
+        public EmailNotificationService(IEmailNotificationRepository notificationRepository, IMapper mapper)
         {
             _notificationRepository = notificationRepository;
+            _mapper = mapper;
         }
 
         public IEnumerable<EmailNotificationReadDto> GetAllNotifications()
         {
             var notifications = _notificationRepository.GetAll();
-            return notifications.Select(notification => new EmailNotificationReadDto
-            {
-                Id = notification.Id,
-                UserId = notification.UserId,
-                MailId = notification.MailId,
-                SentDate = notification.SentDate,
-                NotificationType = notification.NotificationType
-            });
+            return _mapper.Map<IEnumerable<EmailNotificationReadDto>>(notifications);
         }
 
         public EmailNotificationReadDto GetNotificationById(Guid id)
         {
             var notification = _notificationRepository.GetById(id);
-            if (notification == null)
-                return null;
-
-            return new EmailNotificationReadDto
-            {
-                Id = notification.Id,
-                UserId = notification.UserId,
-                MailId = notification.MailId,
-                SentDate = notification.SentDate,
-                NotificationType = notification.NotificationType
-            };
+            return _mapper.Map<EmailNotificationReadDto>(notification);
         }
 
         public EmailNotificationReadDto CreateNotification(EmailNotificationCreateDto notificationDto)
         {
-            var notification = new EmailNotification
-            {
-                Id = Guid.NewGuid(),
-                UserId = notificationDto.UserId,
-                MailId = notificationDto.MailId,
-                SentDate = DateTime.UtcNow,
-                NotificationType = notificationDto.NotificationType
-            };
+            var notification = _mapper.Map<EmailNotification>(notificationDto);
+            notification.Id = Guid.NewGuid();
+            notification.SentDate = DateTime.UtcNow;
 
-            var createdNotification = _notificationRepository.Create(notification);
+            _notificationRepository.Create(notification);
 
-            return new EmailNotificationReadDto
-            {
-                Id = createdNotification.Id,
-                UserId = createdNotification.UserId,
-                MailId = createdNotification.MailId,
-                SentDate = createdNotification.SentDate,
-                NotificationType = createdNotification.NotificationType
-            };
+            return _mapper.Map<EmailNotificationReadDto>(notification);
         }
 
         public bool UpdateNotification(Guid id, EmailNotificationUpdateDto notificationDto)
@@ -75,7 +46,7 @@ namespace MailManagement_vav0256.Services
             if (notification == null)
                 return false;
 
-            notification.NotificationType = notificationDto.NotificationType;
+            _mapper.Map(notificationDto, notification);
 
             _notificationRepository.Update(notification);
 
